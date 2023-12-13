@@ -1,0 +1,45 @@
+service: variants-webservice-web
+package:
+  individually: true
+provider:
+  name: aws
+  profile: default
+  region: eu-central-1
+  stage: prod
+  runtime: python3.11
+  memorySize: 128
+  timeout: 30
+
+plugins:
+  - serverless-python-requirements
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    layer:
+      name: FastAPI-Lambda-Function
+      description: FastAPI-Lambda-Function API Layer
+      compatibleRuntimes:
+        - python3.11
+functions:
+  app:
+    package:
+      patterns:
+        - 'src/**'
+        - '!requirements.txt'
+        - '!package.json'
+        - '!package-lock.json'
+        - '!.serverless/**'
+        - '!venv/**'
+        - '!node_modules/**'
+    handler: main.handler
+    environment:
+      STAGE: ${self:provider.stage}
+    layers:
+      - { Ref: PythonRequirementsLambdaLayer }
+    events:
+      - http:
+          method: get
+          path: /
+      - http:
+          method: any
+          path: /{proxy+}
